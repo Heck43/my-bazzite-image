@@ -47,23 +47,27 @@ for f in asset-*.tar.gz; do
   echo "==> Processing $f"
   rm -rf unpack
   mkdir -p unpack
-  tar -xzf "$f" -C unpack
+
+  # ВАЖНО: не переносим владельцев/права из архива (иначе прилетает uid 1001 и bootc lint падает)
+  tar --no-same-owner --no-same-permissions -xzf "$f" -C unpack
 
   if [[ -d "unpack/usr" ]]; then
     echo "  - Installing ./usr -> /usr"
-    cp -a unpack/usr/. /usr/
+    cp -a --no-preserve=ownership unpack/usr/. /usr/
   fi
 
   if [[ -d "unpack/opt" ]]; then
     echo "  - Installing ./opt -> /var/opt (keeps /opt symlink semantics)"
-    cp -a unpack/opt/. /var/opt/
+    cp -a --no-preserve=ownership unpack/opt/. /var/opt/
   fi
 done
 
+echo "==> Fixing stray uid/gid 1001 (bootc lint var-tmpfiles)"
+# -xdev: не уходим на другие FS-маунты
+find /var -xdev \( -uid 1001 -o -gid 1001 \) -exec chown -h 0:0 {} + || true
+find /usr -xdev \( -uid 1001 -o -gid 1001 \) -exec chown -h 0:0 {} + || true
 
 echo "==> Verifying something actually installed"
-# Подстрой это под реальный путь Millennium после распаковки.
-# (Оставил несколько типичных проверок)
 if [[ -d /usr/lib/millennium || -d /usr/share/millennium || -e /usr/bin/millennium ]]; then
   echo "==> Millennium payload seems present"
 else
