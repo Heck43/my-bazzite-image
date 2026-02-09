@@ -39,7 +39,9 @@ for u in "${urls[@]}"; do
 done
 
 echo "==> Unpacking + installing payload(s)"
-mkdir -p /usr /opt
+
+# /opt может быть ссылкой на /var/opt — так и надо.
+mkdir -p /usr /var/opt
 
 for f in asset-*.tar.gz; do
   echo "==> Processing $f"
@@ -47,16 +49,17 @@ for f in asset-*.tar.gz; do
   mkdir -p unpack
   tar -xzf "$f" -C unpack
 
-  # Если в архиве есть ./usr или ./opt — ставим их
   if [[ -d "unpack/usr" ]]; then
     echo "  - Installing ./usr -> /usr"
     cp -a unpack/usr/. /usr/
   fi
+
   if [[ -d "unpack/opt" ]]; then
-    echo "  - Installing ./opt -> /opt"
-    cp -a unpack/opt/. /opt/
+    echo "  - Installing ./opt -> /var/opt (keeps /opt symlink semantics)"
+    cp -a unpack/opt/. /var/opt/
   fi
 done
+
 
 echo "==> Verifying something actually installed"
 # Подстрой это под реальный путь Millennium после распаковки.
