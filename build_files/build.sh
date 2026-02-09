@@ -2,7 +2,7 @@
 set -euo pipefail
 
 echo "==> Installing build dependencies (curl, tar, jq)"
-rpm-ostree install -y curl tar jq
+rpm-ostree install -y --allow-inactive curl tar jq
 rpm-ostree cleanup -m
 
 tmp="/tmp/millennium"
